@@ -21,10 +21,10 @@ apk del -r shadow
 apk add dropbear mtd-utils-ubi btop unudhcpd --no-cache
 rc-update add dropbear default
 
-# Install Python and responder
-apk add python3 py3-pip python3-dev build-base --no-cache
+# Install Python and responder (without build tools to save space)
+apk add python3 py3-pip --no-cache
 ln -sf /usr/bin/python3 /usr/bin/python
-pip3 install --no-cache-dir responder
+pip3 install --break-system-packages --no-cache-dir responder
 
 # Clear apk cache
 rm -rf /var/cache/apk/*
