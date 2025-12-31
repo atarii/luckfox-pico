@@ -21,10 +21,11 @@ apk del -r shadow
 apk add dropbear mtd-utils-ubi btop unudhcpd --no-cache
 rc-update add dropbear default
 
-# Install Python and responder (without build tools to save space)
-apk add python3 py3-pip --no-cache
+# Install Python and Responder from testing repo
+apk add python3 --no-cache
 ln -sf /usr/bin/python3 /usr/bin/python
-pip3 install --break-system-packages --no-cache-dir responder
+# Enable testing repository and install responder
+apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder --no-cache
 
 # Clear apk cache
 rm -rf /var/cache/apk/*
