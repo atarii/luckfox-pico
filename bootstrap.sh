@@ -21,11 +21,11 @@ apk del -r shadow
 apk add dropbear mtd-utils-ubi btop unudhcpd --no-cache
 rc-update add dropbear default
 
-# Install Python and Responder from testing repo
+# Install Python, Responder and aioquic from testing repo
 apk add python3 --no-cache
 ln -sf /usr/bin/python3 /usr/bin/python
-# Enable testing repository and install responder
-apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder --no-cache
+# Enable testing repository and install responder and aioquic
+apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder py3-aioquic --no-cache
 
 # Clear apk cache
 rm -rf /var/cache/apk/*
