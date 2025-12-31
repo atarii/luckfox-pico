@@ -9,15 +9,32 @@ jobs:
   build-rootfs:
     runs-on: ubuntu-latest
     steps:
+      - name: Free Disk Space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          echo "Disk space after cleanup:"
+          df -h
+      
       - name: checkout
         uses: actions/checkout@v4
+      
       - name: build rootfs
         run: sudo ./rootfs.sh
+      
       - name: upload rootfs
         uses: actions/upload-artifact@v4
         with:
           name: rootfs-alpine
           path: output/rootfs-alpine.tar.gz
+  
   build-system:
     strategy:
       matrix:
@@ -25,20 +42,38 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-rootfs
     steps:
+      - name: Free Disk Space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          echo "Disk space after cleanup:"
+          df -h
+      
       - name: checkout
         uses: actions/checkout@v5
         with:
           submodules: "recursive"
+      
       - name: ccache setup
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           create-symlink: true
+      
       - name: download rootfs
         uses: actions/download-artifact@v5
         with:
           name: rootfs-alpine
+      
       - name: update apt
         run: sudo apt update
+      
       - name: install deps
         run: "sudo apt install -y \
           git ssh make gcc gcc-multilib g++-multilib \
@@ -47,13 +82,16 @@ jobs:
           device-tree-compiler libncurses5-dev pkg-config bc \
           python-is-python3 passwd openssl openssh-server \
           openssh-client vim file cpio rsync"
+      
       - name: build system
         run: ./system.sh -f rootfs-alpine.tar.gz -d ${{ matrix.device }}
+      
       - name: upload update.img
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.device }}-sysupgrade
           path: output/${{ matrix.device }}-sysupgrade.img
+      
       - name: upload sdk images
         uses: actions/upload-artifact@v4
         with:
