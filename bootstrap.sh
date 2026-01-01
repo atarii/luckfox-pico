@@ -27,6 +27,17 @@ ln -sf /usr/bin/python3 /usr/bin/python
 # Enable testing repository and install responder and aioquic
 apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder py3-aioquic --no-cache
 
+# Create responder directories
+mkdir -p /var/log/responder
+mkdir -p /var/lib/responder
+
+# Generate SSL certificates for Responder
+if [ -f /usr/share/responder/certs/gen-self-signed-cert.sh ]; then
+    cd /usr/share/responder/certs/
+    sh ./gen-self-signed-cert.sh
+    cd -
+fi
+
 # Clear apk cache
 rm -rf /var/cache/apk/*
 
