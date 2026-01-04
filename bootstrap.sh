@@ -18,7 +18,7 @@ echo -e "luckfox\nluckfox" | passwd
 apk del -r shadow
 
 # Install SSH
-apk add dropbear mtd-utils-ubi btop unudhcpd --no-cache
+apk add dropbear mtd-utils-ubi btop unudhcpd nmap --no-cache
 rc-update add dropbear default
 
 # Install Python, OpenSSL, Responder and aioquic from testing repo
