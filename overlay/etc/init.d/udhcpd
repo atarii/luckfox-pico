@@ -1,0 +1,17 @@
+#!/sbin/openrc-run
+
+command="/usr/sbin/udhcpd"
+command_args="-f /etc/udhcpd.conf"
+command_background="yes"
+pidfile="/var/run/udhcpd.pid"
+
+depend() {
+    need net
+    after firewall
+}
+
+start_pre() {
+    # Create lease file directory
+    mkdir -p /var/lib/misc
+    touch /var/lib/misc/udhcpd.leases
+}
