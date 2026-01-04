@@ -59,9 +59,6 @@ overlay() {
   ln -s "/etc/init.d/usb_gadget" \
     "$ROOTFS_WORKSPACE_MNT/etc/runlevels/default/usb_gadget"
 
-  ln -s "/etc/init.d/udhcpd" \
-    "$ROOTFS_WORKSPACE_MNT/etc/runlevels/default/udhcpd"
-
   chmod +x "$ROOTFS_WORKSPACE_MNT/etc/local.d/00-responder-certs.start"
 
   # Create responder directories in the final rootfs
