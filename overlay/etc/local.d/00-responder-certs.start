@@ -1,0 +1,18 @@
+#!/bin/sh
+# Generate Responder SSL certificates on first boot
+
+CERT_DIR="/usr/share/responder/certs"
+CERT_FLAG="/var/lib/responder/.certs_generated"
+
+if [ ! -f "$CERT_FLAG" ]; then
+    echo "Generating Responder SSL certificates..."
+    mkdir -p "$CERT_DIR"
+    cd /usr/share/responder
+    if [ -f "$CERT_DIR/gen-self-signed-cert.sh" ]; then
+        sh "$CERT_DIR/gen-self-signed-cert.sh"
+        touch "$CERT_FLAG"
+        echo "Certificates generated successfully"
+    else
+        echo "Certificate generation script not found"
+    fi
+fi
