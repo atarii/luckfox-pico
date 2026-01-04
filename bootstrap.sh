@@ -33,15 +33,3 @@ rm -rf /var/cache/apk/*
 # Packaging rootfs
 for d in bin etc lib sbin usr; do tar c "$d" | tar x -C /extrootfs; done
 for dir in dev proc root run sys var oem userdata; do mkdir /extrootfs/${dir}; done
-
-# Create responder directories in the final rootfs
-mkdir -p /extrootfs/var/log/responder
-mkdir -p /extrootfs/var/lib/responder
-mkdir -p /extrootfs/var/run/responder
-
-# Set execute permissions for scripts
-chmod +x /extrootfs/etc/local.d/00-responder-certs.start 2>/dev/null || true
-chmod +x /extrootfs/etc/init.d/udhcpd 2>/dev/null || true
-
-# Enable udhcpd service
-ln -s /etc/init.d/udhcpd /extrootfs/etc/runlevels/default/udhcpd 2>/dev/null || true
