@@ -37,9 +37,11 @@ for dir in dev proc root run sys var oem userdata; do mkdir /extrootfs/${dir}; d
 # Create responder directories in the final rootfs
 mkdir -p /extrootfs/var/log/responder
 mkdir -p /extrootfs/var/lib/responder
+mkdir -p /extrootfs/var/run/responder
 
 # Set execute permissions for scripts
-chmod +x /extrootfs/etc/local.d/00-responder-certs.start
+chmod +x /extrootfs/etc/local.d/00-responder-certs.start 2>/dev/null || true
+chmod +x /extrootfs/etc/init.d/udhcpd 2>/dev/null || true
 
-# Enable local.d service for first boot scripts
-ln -s /etc/init.d/local /extrootfs/etc/runlevels/default/local
+# Enable udhcpd service
+ln -s /etc/init.d/udhcpd /extrootfs/etc/runlevels/default/udhcpd 2>/dev/null || true
