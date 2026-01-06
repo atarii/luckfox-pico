@@ -9,11 +9,27 @@ jobs:
   build-rootfs:
     runs-on: ubuntu-latest
     steps:
+      - name: Check free space
+        run: df -h
+        
       - name: Delete huge unnecessary tools folder
         run: rm -rf /opt/hostedtoolcache
+        
+      - name: Check free space
+        run: df -h
      
       - name: checkout
         uses: actions/checkout@v4
+      
+      - name: Cache rootfs build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache
+            build/
+          key: rootfs-${{ hashFiles('rootfs.sh', 'packages/**') }}
+          restore-keys: |
+            rootfs-
       
       - name: build rootfs
         run: sudo ./rootfs.sh
@@ -46,6 +62,14 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: rootfs-alpine
+          
+      - name: Cache apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/main.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
       
       - name: update apt
         run: sudo apt update
@@ -58,6 +82,17 @@ jobs:
           device-tree-compiler libncurses5-dev pkg-config bc \
           python-is-python3 passwd openssl openssh-server \
           openssh-client vim file cpio rsync"
+      
+      - name: Cache buildroot downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            sdk/dl
+            sdk/build_dir
+          key: buildroot-${{ matrix.device }}-${{ hashFiles('sdk/**') }}
+          restore-keys: |
+            buildroot-${{ matrix.device }}-
+            buildroot-
       
       - name: build system
         run: ./system.sh -f rootfs-alpine.tar.gz -d ${{ matrix.device }}
