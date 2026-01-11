@@ -24,6 +24,10 @@ rc-update add dropbear default
 # Install Python, OpenSSL, Responder and aioquic from testing repo
 apk add python3 openssl --no-cache
 ln -sf /usr/bin/python3 /usr/bin/python
+
+df -h
+ls /
+ls /*
 # Enable testing repository and install responder and aioquic
 apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder py3-aioquic --no-cache
 
