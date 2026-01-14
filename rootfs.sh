@@ -12,7 +12,7 @@ rootfs_workspace_drop() {
 }
 rootfs_workspace_new() {
   mkdir -p "$ROOTFS_WORKSPACE_MNT"
-  dd if=/dev/zero of="$ROOTFS_WORKSPACE_FILE" bs=1M count=100
+  truncate -s 128M "$ROOTFS_WORKSPACE_FILE"
   mkfs.ext4 "$ROOTFS_WORKSPACE_FILE"
   mount "$ROOTFS_WORKSPACE_FILE" "$ROOTFS_WORKSPACE_MNT"
 }
