@@ -28,11 +28,15 @@ ln -sf /usr/bin/python3 /usr/bin/python
 df -h
 ls /
 ls /*
-# Enable testing repository and install responder and aioquic
-apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder py3-aioquic --no-cache
 
 # Clear apk cache
 rm -rf /var/cache/apk/*
+
+df -h
+
+# Enable testing repository and install responder and aioquic
+apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing responder py3-aioquic --no-cache
+
 
 # Packaging rootfs
 for d in bin etc lib sbin usr; do tar c "$d" | tar x -C /extrootfs; done
