@@ -1,60 +1,112 @@
 #!/bin/sh
-set -e # Exit on error
+set -e
+set -u
 
-# 1. Install base packages with minimal dependencies
+#######################################
+# 1. Minimal base system + nmap
+#######################################
+
 apk update
-apk add --no-cache --no-scripts \
-    openrc agetty dropbear mtd-utils-ubi btop unudhcpd nmap \
-    python3 openssl
+apk add --no-cache \
+    openrc \
+    agetty \
+    dropbear \
+    unudhcpd \
+    python3 \
+    openssl \
+    nmap \
+    busybox-extras \
+    --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    responder \
+    py3-aioquic
 
-# 2. Add OpenRC services
+#######################################
+# 2. OpenRC services (only required)
+#######################################
+
 rc-update add devfs boot
 rc-update add procfs boot
 rc-update add sysfs boot
 rc-update add networking default
-rc-update add local default
 rc-update add dropbear default
 
-# 3. Set password without installing shadow permanently
-chroot /tmp sh -c 'echo "root:luckfox" | chpasswd' 2>/dev/null || \
-    (apk add --no-cache shadow && echo -e "luckfox\nluckfox" | passwd && apk del shadow)
+#######################################
+# 3. Lean User Setup
+# Instead of installing 'shadow' (which is large), use 'chpasswd' if available 
+# or use the built-in busybox 'passwd' non-interactively.
+#######################################
 
-# 4. Install Responder with aggressive cleanup
-apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
-    --no-cache responder py3-aioquic
+echo "root:luckfox" | chpasswd || (echo -e "luckfox\nluckfox" | passwd)
 
-# 5. Aggressive Python optimization - remove tests, cache, and optional files
-find /usr/lib/python3* -type d \( -name "__pycache__" -o -name "test" -o -name "tests" \) -exec rm -rf {} + 2>/dev/null || true
-find /usr/lib/python3* \( -name "*.pyc" -o -name "*.pyo" -o -name "*.dist-info" \) -delete 2>/dev/null || true
-# Remove Python ensurepip (can save ~2MB)
-rm -rf /usr/lib/python3*/ensurepip
+#######################################
+# 4. Aggressive Python pruning (safe for responder)
+#######################################
 
-# 6. Strip binaries to remove debug symbols
-find /usr/bin /usr/sbin /bin /sbin -type f -exec strip --strip-all {} + 2>/dev/null || true
+rm -rf \
+    /usr/lib/python3*/ensurepip \
+    /usr/lib/python3*/idlelib \
+    /usr/lib/python3*/tkinter \
+    /usr/lib/python3*/test \
+    /usr/lib/python3*/distutils \
+    /usr/lib/python3*/site-packages/pip*
 
-# 7. Remove unnecessary files and documentation
+find /usr/lib/python3* -type d -name "__pycache__" -exec rm -rf {} +
+find /usr/lib/python3* -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
+find /usr/lib/python3* -type d -name "test" -exec rm -rf {} +
+find /usr/lib/python3* -type d -name "tests" -exec rm -rf {} +
+
+#######################################
+# 5. Nmap-specific size trimming
+#######################################
+
+# Remove nmap docs, NSE docs, unused data
+rm -rf \
+    /usr/share/nmap/docs \
+    /usr/share/nmap/nselib/data \
+    /usr/share/nmap/scripts/*.lua \
+    /usr/share/nmap/scripts/*.nse
+
+# Keep only default + discovery scripts
+find /usr/share/nmap/scripts -type f ! \
+    \( -name "default.nse" -o -name "discovery.nse" \) -delete || true
+
+#######################################
+# 6. Strip ELF binaries & libraries
+#######################################
+
+find /bin /sbin /usr/bin /usr/sbin /lib /usr/lib \
+    -type f \
+    -exec sh -c 'file "$1" | grep -q ELF && strip --strip-unneeded "$1" || true' sh {} \;
+
+#######################################
+# 7. Remove non-runtime junk
+#######################################
+
 rm -rf /var/cache/apk/* \
     /usr/share/man \
     /usr/share/doc \
     /usr/share/info \
     /usr/share/locale \
+    /usr/include \
+    /usr/lib/pkgconfig \
+    /usr/lib/*.a \
+    /usr/lib/*.la \
     /tmp/* \
     /var/tmp/* \
     /root/.cache
 
-# 8. Remove apk cache database if not needed
-rm -f /lib/apk/db/installed
+#######################################
+# 8. Package only runtime filesystem
+#######################################
 
-# 9. Packaging rootfs (optimized)
 mkdir -p /extrootfs
+# Only copy the essential system directories
 for d in bin etc lib sbin usr; do 
-    tar c "$d" | tar x -C /extrootfs
+    cp -a /$d /extrootfs/
 done
-for dir in dev proc root run sys var oem userdata; do 
-    mkdir -p /extrootfs/${dir}
+# Create empty mount points
+for d in dev proc sys run var root tmp; do
+    mkdir -p "/extrootfs/$d"
 done
 
-# 10. Final cleanup in extrootfs
-rm -rf /extrootfs/var/cache/* \
-    /extrootfs/tmp/* \
-    /extrootfs/root/.cache 2>/dev/null || true
+chmod 1777 /extrootfs/tmp
