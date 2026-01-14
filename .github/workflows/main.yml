@@ -86,4 +86,22 @@ jobs:
           openssh-client vim file cpio rsync
 
       - name: Cache buildroot downloads
-        uses: actions/cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            sdk/dl
+            sdk/build_dir
+          # FIX: Changed hashFiles to use main.yml because sdk/** doesn't exist yet
+          key: buildroot-${{ matrix.device }}-${{ hashFiles('.github/workflows/main.yml') }}
+          restore-keys: |
+            buildroot-${{ matrix.device }}-
+            buildroot-
+      
+      - name: build system
+        run: ./system.sh -f rootfs-alpine.tar.gz -d ${{ matrix.device }}
+      
+      - name: upload sdk images
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.device }}-outputs
+          path: sdk/output/image
