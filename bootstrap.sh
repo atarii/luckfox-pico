@@ -1,50 +1,60 @@
 #!/bin/sh
-set -e
+set -e # Exit on error
 
-# 1. Install packages with --no-cache and exclude documentation
-# We use --virtual to group build dependencies if any were needed
+# 1. Install base packages with minimal dependencies
 apk update
-apk add --no-cache \
-    openrc agetty dropbear mtd-utils-ubi btop unudhcpd nmap python3 openssl \
-    --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
-    responder py3-aioquic
+apk add --no-cache --no-scripts \
+    openrc agetty dropbear mtd-utils-ubi btop unudhcpd nmap \
+    python3 openssl
 
-# 2. Add OpenRC services (No change needed here)
-for svc in devfs procfs sysfs; do rc-update add $svc boot; done
-for svc in networking local dropbear; do rc-update add $svc default; done
+# 2. Add OpenRC services
+rc-update add devfs boot
+rc-update add procfs boot
+rc-update add sysfs boot
+rc-update add networking default
+rc-update add local default
+rc-update add dropbear default
 
-# 3. Lean User Setup
-# Instead of installing 'shadow' (which is large), use 'chpasswd' if available 
-# or use the built-in busybox 'passwd' non-interactively.
-echo "root:luckfox" | chpasswd || (echo -e "luckfox\nluckfox" | passwd)
+# 3. Set password without installing shadow permanently
+chroot /tmp sh -c 'echo "root:luckfox" | chpasswd' 2>/dev/null || \
+    (apk add --no-cache shadow && echo -e "luckfox\nluckfox" | passwd && apk del shadow)
 
-# 4. Binary Stripping (The "Secret Sauce" for size)
-# This removes debug symbols from all executables and libraries
-find /bin /sbin /usr/bin /usr/sbin /usr/lib -type f -exec strip --strip-all {} + || true
+# 4. Install Responder with aggressive cleanup
+apk add --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
+    --no-cache responder py3-aioquic
 
-# 5. Aggressive Python Shrinking
-# Delete __pycache__, tests, and ensure no .pyc or .pyo files remain
-find /usr/lib/python* -name "__pycache__" -type d -exec rm -rf {} +
-find /usr/lib/python* -name "*.pyc" -delete
-find /usr/lib/python* -name "*.pyo" -delete
-find /usr/lib/python* -name "test" -type d -exec rm -rf {} +
-find /usr/lib/python* -name "tests" -type d -exec rm -rf {} +
+# 5. Aggressive Python optimization - remove tests, cache, and optional files
+find /usr/lib/python3* -type d \( -name "__pycache__" -o -name "test" -o -name "tests" \) -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* \( -name "*.pyc" -o -name "*.pyo" -o -name "*.dist-info" \) -delete 2>/dev/null || true
+# Remove Python ensurepip (can save ~2MB)
+rm -rf /usr/lib/python3*/ensurepip
 
-# 6. Delete Documentation, Locales, and Headers
-rm -rf /usr/share/man /usr/share/doc /usr/share/info /usr/include
-rm -rf /usr/lib/*.a /usr/lib/*.la  # Static libraries
-rm -rf /var/cache/apk/* /etc/apk/cache/*
+# 6. Strip binaries to remove debug symbols
+find /usr/bin /usr/sbin /bin /sbin -type f -exec strip --strip-all {} + 2>/dev/null || true
 
-# 7. Efficient Rootfs Packaging
-# Use 'cp -a' or 'rsync' to maintain links without the overhead of double-tar
-# Only copy the essential system directories
+# 7. Remove unnecessary files and documentation
+rm -rf /var/cache/apk/* \
+    /usr/share/man \
+    /usr/share/doc \
+    /usr/share/info \
+    /usr/share/locale \
+    /tmp/* \
+    /var/tmp/* \
+    /root/.cache
+
+# 8. Remove apk cache database if not needed
+rm -f /lib/apk/db/installed
+
+# 9. Packaging rootfs (optimized)
+mkdir -p /extrootfs
 for d in bin etc lib sbin usr; do 
-    cp -a /$d /extrootfs/
+    tar c "$d" | tar x -C /extrootfs
+done
+for dir in dev proc root run sys var oem userdata; do 
+    mkdir -p /extrootfs/${dir}
 done
 
-# Create empty mount points
-mkdir -p /extrootfs/dev /extrootfs/proc /extrootfs/root /extrootfs/run \
-         /extrootfs/sys /extrootfs/var /extrootfs/oem /extrootfs/userdata /extrootfs/tmp
-
-# Final cleanup of the target
-rm -rf /extrootfs/usr/share/terminfo/[!vlp]* # Keep only vital terminfo if needed
+# 10. Final cleanup in extrootfs
+rm -rf /extrootfs/var/cache/* \
+    /extrootfs/tmp/* \
+    /extrootfs/root/.cache 2>/dev/null || true
