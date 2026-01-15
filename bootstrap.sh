@@ -44,18 +44,20 @@ echo "root:luckfox" | chpasswd || (echo -e "luckfox\nluckfox" | passwd)
 # 4. Aggressive Python pruning (safe for responder)
 #######################################
 
-rm -rf \
-    /usr/lib/python3*/ensurepip \
-    /usr/lib/python3*/idlelib \
-    /usr/lib/python3*/tkinter \
-    /usr/lib/python3*/test \
-    /usr/lib/python3*/distutils \
-    /usr/lib/python3*/site-packages/pip*
+rm -rf /usr/lib/python3*/site-packages/pip*
 
-find /usr/lib/python3* -type d -name "__pycache__" -exec rm -rf {} +
+find /usr/lib/python3* -type d -name "test*" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "unittest" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "ensurepip" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "distutils" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "tkinter" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "idlelib" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "lib2to3" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -name "*.dist-info" -type d -exec rm -rf {} + 2>/dev/null || true
+find /usr/lib/python3* -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
 find /usr/lib/python3* -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
-find /usr/lib/python3* -type d -name "test" -exec rm -rf {} +
-find /usr/lib/python3* -type d -name "tests" -exec rm -rf {} +
 
 #######################################
 # 5. Nmap and wireshark-specific size trimming
