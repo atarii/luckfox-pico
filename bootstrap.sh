@@ -15,10 +15,12 @@ apk add --no-cache \
     python3 \
     openssl \
     nmap \
+    nmap-scripts \
     busybox-extras \
     --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
     responder \
-    py3-aioquic
+    py3-aioquic \
+    tshark
 
 #######################################
 # 2. OpenRC services (only required)
@@ -56,15 +58,17 @@ find /usr/lib/python3* -type d -name "test" -exec rm -rf {} +
 find /usr/lib/python3* -type d -name "tests" -exec rm -rf {} +
 
 #######################################
-# 5. Nmap-specific size trimming
+# 5. Nmap and wireshark-specific size trimming
 #######################################
 
-# Remove nmap docs, NSE docs, unused data
+# Remove nmap docs, NSE docs, wireshark docs, unused data
 rm -rf \
     /usr/share/nmap/docs \
     /usr/share/nmap/nselib/data \
     /usr/share/nmap/scripts/*.lua \
-    /usr/share/nmap/scripts/*.nse
+    /usr/share/nmap/scripts/*.nse \
+    /usr/share/wireshark/help \
+    /usr/share/wireshark/diameter
 
 # Keep only default + discovery scripts
 find /usr/share/nmap/scripts -type f ! \
