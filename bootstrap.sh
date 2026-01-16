@@ -19,8 +19,7 @@ apk add --no-cache \
     busybox-extras \
     --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
     responder \
-    py3-aioquic \
-    tshark
+    py3-aioquic
 
 #######################################
 # 2. OpenRC services (only required)
