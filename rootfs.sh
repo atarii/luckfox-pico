@@ -7,7 +7,7 @@ ROOTFS_FILE="rootfs-alpine.tar.gz"
 ROOTFS_WORKSPACE_NAME="rootfs-alpine"
 ROOTFS_WORKSPACE_FILE="$ROOTFS_WORKSPACE_NAME.ext4"
 ROOTFS_WORKSPACE_MNT="/tmp/$ROOTFS_WORKSPACE_NAME/"
-ROOTFS_SIZE="500M"  # Increased from 200M for better margin
+ROOTFS_SIZE="256M"  # Increased from 200M for better margin
 
 # Colors for output
 RED='\033[0;31m'
