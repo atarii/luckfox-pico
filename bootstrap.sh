@@ -16,6 +16,7 @@ apk add --no-cache \
     openssl \
     nmap \
     nmap-scripts \
+    tcpdump \
     busybox-extras \
     --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing \
     responder \
